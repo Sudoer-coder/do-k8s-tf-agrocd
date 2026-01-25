@@ -7,6 +7,7 @@ on:
     branches: [ "main" ]
 
 env:
+  # Terraform Cloud token (GitHub → Terraform Cloud)
   TF_TOKEN_app_terraform_io: ${{ secrets.TF_API_TOKEN }}
 
 jobs:
@@ -47,6 +48,13 @@ jobs:
             echo "✅ TF_TOKEN_app_terraform_io is set (masked)"
           fi
 
+      # 🔥 CRITICAL: Fix provider + lockfile cache issues
+      - name: Clean Terraform cache
+        run: |
+          echo "🧹 Cleaning Terraform cache..."
+          rm -rf .terraform
+          rm -f .terraform.lock.hcl
+
       - name: Debug - backend.tf
         run: |
           echo "🔎 Showing backend.tf"
@@ -59,7 +67,7 @@ jobs:
           fi
 
       - name: Terraform Init
-        run: terraform init -input=false
+        run: terraform init -input=false -upgrade
 
       - name: Terraform Format Check
         run: terraform fmt -check
@@ -105,6 +113,13 @@ jobs:
             echo "✅ TF_TOKEN_app_terraform_io is set (masked)"
           fi
 
+      # 🔥 CRITICAL: Clean again for second job
+      - name: Clean Terraform cache
+        run: |
+          echo "🧹 Cleaning Terraform cache..."
+          rm -rf .terraform
+          rm -f .terraform.lock.hcl
+
       - name: Debug - backend.tf
         run: |
           echo "🔎 Showing backend.tf"
@@ -117,7 +132,10 @@ jobs:
           fi
 
       - name: Terraform Init
-        run: terraform init -input=false
+        run: terraform init -input=false -upgrade
+
+      - name: Terraform Providers Debug
+        run: terraform providers
 
       - name: Terraform Plan (Dry Run)
         run: terraform plan -input=false
