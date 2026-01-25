@@ -1,9 +1,9 @@
 terraform {
   cloud {
-    organization = "your-org-name"
+    organization = "my-code-space"
 
     workspaces {
-      name = "doks-prod"
+      name = "microservice-doks-tf-ansible"
     }
   }
 }
