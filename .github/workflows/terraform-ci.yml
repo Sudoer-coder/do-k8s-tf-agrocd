@@ -7,7 +7,7 @@ on:
     branches: [ "main" ]
 
 env:
-  TF_API_TOKEN: ${{ secrets.TF_API_TOKEN }}
+  TF_TOKEN_app_terraform_io: ${{ secrets.TF_API_TOKEN }}
 
 jobs:
   terraform-check:
@@ -27,6 +27,16 @@ jobs:
         with:
           terraform_version: 1.6.6
 
+      - name: Debug - Check Terraform Cloud Token
+        run: |
+          echo "🔎 Checking Terraform Cloud token..."
+          if [ -z "$TF_TOKEN_app_terraform_io" ]; then
+            echo "❌ TF_TOKEN_app_terraform_io is NOT set"
+            exit 1
+          else
+            echo "✅ TF_TOKEN_app_terraform_io is set (masked)"
+          fi
+
       - name: Terraform Init
         run: terraform init -input=false
 
@@ -39,7 +49,7 @@ jobs:
   terraform-plan:
     name: Terraform Plan (Dry Run Validation)
     runs-on: ubuntu-latest
-    needs: terraform-check   # 👈 Gate: only run if job 1 passes
+    needs: terraform-check
 
     defaults:
       run:
@@ -54,6 +64,16 @@ jobs:
         with:
           terraform_version: 1.6.6
 
+      - name: Debug - Check Terraform Cloud Token
+        run: |
+          echo "🔎 Checking Terraform Cloud token..."
+          if [ -z "$TF_TOKEN_app_terraform_io" ]; then
+            echo "❌ TF_TOKEN_app_terraform_io is NOT set"
+            exit 1
+          else
+            echo "✅ TF_TOKEN_app_terraform_io is set (masked)"
+          fi
+
       - name: Terraform Init
         run: terraform init -input=false
 
@@ -62,8 +82,4 @@ jobs:
 
       - name: CI Final Status
         run: |
-          echo "======================================"
-          echo "✅ Terraform validation and plan SUCCESS"
-          echo "🚀 Apply will be executed by Terraform Cloud"
-          echo "📡 Waiting for Terraform Cloud auto-apply"
           echo "======================================"
