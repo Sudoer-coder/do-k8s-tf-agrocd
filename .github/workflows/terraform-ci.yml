@@ -27,7 +27,17 @@ jobs:
         with:
           terraform_version: 1.6.6
 
-      - name: Debug - Check Terraform Cloud Token
+      - name: Debug - Terraform Environment
+        run: |
+          echo "================ Terraform Debug ================"
+          terraform version
+          echo "Working directory:"
+          pwd
+          echo "TF env vars:"
+          env | grep '^TF_' || true
+          echo "================================================"
+
+      - name: Debug - Terraform Cloud Token
         run: |
           echo "🔎 Checking Terraform Cloud token..."
           if [ -z "$TF_TOKEN_app_terraform_io" ]; then
@@ -35,6 +45,17 @@ jobs:
             exit 1
           else
             echo "✅ TF_TOKEN_app_terraform_io is set (masked)"
+          fi
+
+      - name: Debug - backend.tf
+        run: |
+          echo "🔎 Showing backend.tf"
+          if [ -f backend.tf ]; then
+            sed -n '1,200p' backend.tf
+          else
+            echo "❌ backend.tf NOT found in terraform directory"
+            ls -la
+            exit 1
           fi
 
       - name: Terraform Init
@@ -64,7 +85,17 @@ jobs:
         with:
           terraform_version: 1.6.6
 
-      - name: Debug - Check Terraform Cloud Token
+      - name: Debug - Terraform Environment
+        run: |
+          echo "================ Terraform Debug ================"
+          terraform version
+          echo "Working directory:"
+          pwd
+          echo "TF env vars:"
+          env | grep '^TF_' || true
+          echo "================================================"
+
+      - name: Debug - Terraform Cloud Token
         run: |
           echo "🔎 Checking Terraform Cloud token..."
           if [ -z "$TF_TOKEN_app_terraform_io" ]; then
@@ -72,6 +103,17 @@ jobs:
             exit 1
           else
             echo "✅ TF_TOKEN_app_terraform_io is set (masked)"
+          fi
+
+      - name: Debug - backend.tf
+        run: |
+          echo "🔎 Showing backend.tf"
+          if [ -f backend.tf ]; then
+            sed -n '1,200p' backend.tf
+          else
+            echo "❌ backend.tf NOT found in terraform directory"
+            ls -la
+            exit 1
           fi
 
       - name: Terraform Init
@@ -82,4 +124,8 @@ jobs:
 
       - name: CI Final Status
         run: |
+          echo "======================================"
+          echo "✅ Terraform validation and plan SUCCESS"
+          echo "🚀 Apply will be executed by Terraform Cloud"
+          echo "📡 Waiting for Terraform Cloud auto-apply"
           echo "======================================"
