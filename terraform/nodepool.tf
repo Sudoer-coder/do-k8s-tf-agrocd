@@ -10,7 +10,6 @@ resource "digitalocean_kubernetes_node_pool" "medium" {
 
   tags = [
     "env:${var.environment}",
-    "cluster:${var.cluster_name}",
-    "managed-by:terraform"
+    "cluster:${var.cluster_name}"
   ]
 }
