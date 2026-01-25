@@ -1,0 +1,42 @@
+name: terraform-ci
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+
+jobs:
+  terraform:
+    name: Terraform CI
+    runs-on: ubuntu-latest
+
+    steps:
+
+      # Step 0 — Checkout Code
+ 
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+
+      # Step 1 — Terraform Validation
+     
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+
+      - name: Terraform Init
+        run: terraform init
+
+      - name: Terraform Format Check
+        run: terraform fmt -check
+
+      - name: Terraform Validate
+        run: terraform validate
+
+     
+      # Step 2 — Test After Validation
+     
+      - name: Terraform Plan (Speculative Test)
+        run: terraform plan -input=false
+
+      - name: Validation Result
+        run: echo "validation is okay, apply by Terraform Cloud"
