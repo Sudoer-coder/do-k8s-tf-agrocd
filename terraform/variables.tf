@@ -27,11 +27,19 @@ variable "nodepool_size" {
   type = string
 }
 
-variable "nodepool_min_nodes" {
+variable "mid_nodepool_max_nodes" {
   type = number
 }
 
-variable "nodepool_max_nodes" {
+variable "mid_nodepool_min_nodes" {
+  type = number
+}
+
+variable "small_nodepool_count_max" {
+  type = number
+}
+
+variable "small_nodepool_count_min" {
   type = number
 }
 
