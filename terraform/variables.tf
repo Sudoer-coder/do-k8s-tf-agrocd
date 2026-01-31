@@ -38,3 +38,4 @@ variable "nodepool_max_nodes" {
 variable "environment" {
   type = string
 }
+
