@@ -6,7 +6,7 @@ resource "helm_release" "argocd" {
   version    = "5.51.6" # Pin version for production
 
   values = [
-    templatefile("${path.module}/values.yaml.tpl", {
+    templatefile("${path.module}/values.yaml", {
       argocd_domain = var.argocd_domain
     })
   ]
