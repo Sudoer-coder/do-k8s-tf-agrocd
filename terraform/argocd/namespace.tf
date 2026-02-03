@@ -3,7 +3,9 @@ resource "kubernetes_namespace" "argocd" {
     name = "argocd"
 
     labels = {
-      "pod-security.kubernetes.io/enforce" = "baseline"
+      name        = "argocd"
+      environment = "production"
+      managed-by  = "terraform"
     }
   }
 }

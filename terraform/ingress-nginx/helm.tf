@@ -1,28 +1,24 @@
 resource "helm_release" "nginx_ingress" {
-  name      = "ingress-nginx"
-  namespace = kubernetes_namespace.ingress.metadata[0].name
+  name             = "nginx-ingress"
+  repository       = "https://kubernetes.github.io/ingress-nginx"
+  chart            = "ingress-nginx"
+  namespace        = kubernetes_namespace.ingress.metadata[0].name
+  create_namespace = true
+  version          = "4.9.1" # specify version or omit for latest
 
-  repository = "https://kubernetes.github.io/ingress-nginx"
-  chart      = "ingress-nginx"
-  version    = "4.11.3"
+  # Common configuration values
+  set {
+    name  = "controller.service.type"
+    value = "LoadBalancer"
+  }
 
-  create_namespace = false
-  cleanup_on_fail  = true
+  set {
+    name  = "controller.metrics.enabled"
+    value = "true"
+  }
 
-  values = [
-    <<-EOF
-controller:
-  service:
-    type: LoadBalancer
-  admissionWebhooks:
-    enabled: true
-EOF
-  ]
-
-  wait    = true
-  timeout = 600
-
-  depends_on = [
-    kubernetes_namespace.ingress
-  ]
+  # Optional: Custom values file
+  # values = [
+  #   file("${path.module}/nginx-ingress-values.yaml")
+  # ]
 }

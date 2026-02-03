@@ -1,43 +1,406 @@
-server:
-  replicas: 2
+# ArgoCD Production Configuration - Small Scale
+# Optimized for production workloads with minimal resource footprint
 
-  service:
-    type: ClusterIP
+global:
+  domain: ${argocd_domain}
 
-  extraArgs:
-    - --insecure=false
+## Core Configuration
+configs:
+  params:
+    # Server configuration
+    server.insecure: true  # HTTP mode (for internal/HTTP-only access)
+    server.disable.auth: false
+    
+    # Performance tuning - optimized for small scale
+    controller.status.processors: 10
+    controller.operation.processors: 5
+    controller.self.heal.timeout.seconds: 5
+    controller.repo.server.timeout.seconds: 60
+    
+    # Application sync settings
+    application.sync.timeout: 120
+    
+  cm:
+    # Timeout configurations
+    timeout.reconciliation: 180s
+    timeout.hard.reconciliation: 0
+    
+    # Resource tracking
+    application.resourceTrackingMethod: annotation
+    
+    # Features
+    exec.enabled: true
+    admin.enabled: true
+    
+    # URL for the application
+    url: http://${argocd_domain}
+    
+    # Diff customizations
+    application.diff.ignoreAggregatedRoles: true
+    resource.exclusions: |
+      - apiGroups:
+        - cilium.io
+        kinds:
+        - CiliumIdentity
+        clusters:
+        - "*"
+    
+  rbac:
+    # Default policy
+    policy.default: role:readonly
+    scopes: '[groups]'
+    
+    # Admin policy
+    policy.csv: |
+      p, role:admin, applications, *, */*, allow
+      p, role:admin, clusters, *, *, allow
+      p, role:admin, repositories, *, *, allow
+      p, role:admin, projects, *, *, allow
+      g, admin, role:admin
 
-  config:
-    exec.enabled: "false"
+  # Repository credentials (add your repos here)
+  repositories: {}
+    # Example:
+    # - url: https://github.com/your-org/your-repo
+    #   type: git
+    #   name: your-repo
 
+## Application Controller
+controller:
+  name: application-controller
+  
+  # Small scale: single replica (increase to 2 for HA if needed)
+  replicas: 1
+  
+  # Metrics
+  metrics:
+    enabled: true
+    service:
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/port: "8082"
+  
+  # Resources - optimized for small production workloads
   resources:
-    requests:
-      cpu: 200m
-      memory: 256Mi
     limits:
       cpu: 500m
-      memory: 512Mi
-
-controller:
-  resources:
+      memory: 1Gi
     requests:
       cpu: 250m
       memory: 512Mi
-    limits:
-      cpu: 750m
-      memory: 768Mi
+  
+  # Environment variables
+  env:
+    - name: ARGOCD_RECONCILIATION_TIMEOUT
+      value: "180s"
+    - name: ARGOCD_REPO_SERVER_TIMEOUT_SECONDS
+      value: "60"
+    - name: ARGOCD_APPLICATION_CONTROLLER_REPO_SERVER_TIMEOUT_SECONDS
+      value: "60"
+  
+  # Liveness and readiness probes
+  livenessProbe:
+    enabled: true
+    initialDelaySeconds: 30
+    periodSeconds: 10
+    timeoutSeconds: 5
+    successThreshold: 1
+    failureThreshold: 3
+  
+  readinessProbe:
+    enabled: true
+    initialDelaySeconds: 10
+    periodSeconds: 10
+    timeoutSeconds: 5
+    successThreshold: 1
+    failureThreshold: 3
 
-repoServer:
+## Server
+server:
+  name: server
+  
+  # Minimal HA: 2 replicas for production resilience
+  replicas: 2
+  
+  # Service configuration
+  service:
+    type: ClusterIP
+    servicePortHttp: 80
+    servicePortHttpName: http
+  
+  # Metrics
+  metrics:
+    enabled: true
+    service:
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/port: "8083"
+  
+  # Resources - minimal for UI/API server
   resources:
+    limits:
+      cpu: 200m
+      memory: 256Mi
     requests:
       cpu: 100m
-      memory: 256Mi
-    limits:
-      cpu: 300m
-      memory: 512Mi
+      memory: 128Mi
+  
+  # Extra arguments
+  extraArgs:
+    - --insecure  # HTTP mode
+  
+  # Disable built-in ingress (we manage it separately in Terraform)
+  ingress:
+    enabled: false
+  
+  # Pod anti-affinity for better availability
+  affinity:
+    podAntiAffinity:
+      preferredDuringSchedulingIgnoredDuringExecution:
+        - weight: 100
+          podAffinityTerm:
+            labelSelector:
+              matchLabels:
+                app.kubernetes.io/name: argocd-server
+            topologyKey: kubernetes.io/hostname
+  
+  # Horizontal Pod Autoscaler
+  autoscaling:
+    enabled: true
+    minReplicas: 2
+    maxReplicas: 3
+    targetCPUUtilizationPercentage: 75
+    targetMemoryUtilizationPercentage: 80
+  
+  # Probes
+  livenessProbe:
+    enabled: true
+    initialDelaySeconds: 30
+    periodSeconds: 10
+    timeoutSeconds: 5
+    successThreshold: 1
+    failureThreshold: 3
+  
+  readinessProbe:
+    enabled: true
+    initialDelaySeconds: 10
+    periodSeconds: 10
+    timeoutSeconds: 5
+    successThreshold: 1
+    failureThreshold: 3
 
+## Repository Server
+repoServer:
+  name: repo-server
+  
+  # Minimal HA: 2 replicas
+  replicas: 2
+  
+  # Metrics
+  metrics:
+    enabled: true
+    service:
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/port: "8084"
+  
+  # Resources
+  resources:
+    limits:
+      cpu: 500m
+      memory: 512Mi
+    requests:
+      cpu: 250m
+      memory: 256Mi
+  
+  # Environment variables
+  env:
+    - name: ARGOCD_EXEC_TIMEOUT
+      value: "180s"
+    - name: ARGOCD_GIT_ATTEMPTS_COUNT
+      value: "3"
+    - name: ARGOCD_GIT_RETRY_MAX_DURATION
+      value: "5m"
+  
+  # Pod anti-affinity
+  affinity:
+    podAntiAffinity:
+      preferredDuringSchedulingIgnoredDuringExecution:
+        - weight: 100
+          podAffinityTerm:
+            labelSelector:
+              matchLabels:
+                app.kubernetes.io/name: argocd-repo-server
+            topologyKey: kubernetes.io/hostname
+  
+  # Horizontal Pod Autoscaler
+  autoscaling:
+    enabled: true
+    minReplicas: 2
+    maxReplicas: 3
+    targetCPUUtilizationPercentage: 75
+    targetMemoryUtilizationPercentage: 80
+  
+  # Probes
+  livenessProbe:
+    enabled: true
+    initialDelaySeconds: 30
+    periodSeconds: 10
+    timeoutSeconds: 5
+    successThreshold: 1
+    failureThreshold: 3
+  
+  readinessProbe:
+    enabled: true
+    initialDelaySeconds: 10
+    periodSeconds: 10
+    timeoutSeconds: 5
+    successThreshold: 1
+    failureThreshold: 3
+
+## Redis (Simple - No HA for small scale)
+redis:
+  enabled: true
+  
+  # Resources
+  resources:
+    limits:
+      cpu: 100m
+      memory: 128Mi
+    requests:
+      cpu: 50m
+      memory: 64Mi
+  
+  # Persistence (optional - enable for production)
+  persistence:
+    enabled: false
+    size: 1Gi
+
+## Redis HA (Disabled for small scale - enable if you need HA)
+redis-ha:
+  enabled: false
+  
+  # Uncomment below if you enable redis-ha
+  # haproxy:
+  #   enabled: true
+  #   replicas: 3
+  #   resources:
+  #     limits:
+  #       cpu: 100m
+  #       memory: 128Mi
+  #     requests:
+  #       cpu: 50m
+  #       memory: 64Mi
+  # 
+  # redis:
+  #   resources:
+  #     limits:
+  #       cpu: 100m
+  #       memory: 128Mi
+  #     requests:
+  #       cpu: 50m
+  #       memory: 64Mi
+
+## ApplicationSet Controller
 applicationSet:
   enabled: true
+  
+  # Single replica for small scale
+  replicas: 1
+  
+  # Metrics
+  metrics:
+    enabled: true
+    service:
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/port: "8085"
+  
+  # Resources
+  resources:
+    limits:
+      cpu: 100m
+      memory: 128Mi
+    requests:
+      cpu: 50m
+      memory: 64Mi
+  
+  # Probes
+  livenessProbe:
+    enabled: true
+    initialDelaySeconds: 30
+    periodSeconds: 10
+    timeoutSeconds: 5
+    successThreshold: 1
+    failureThreshold: 3
+  
+  readinessProbe:
+    enabled: true
+    initialDelaySeconds: 10
+    periodSeconds: 10
+    timeoutSeconds: 5
+    successThreshold: 1
+    failureThreshold: 3
 
+## Notifications Controller
+notifications:
+  enabled: true
+  
+  # Single replica
+  replicas: 1
+  
+  # Metrics
+  metrics:
+    enabled: true
+    service:
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/port: "9001"
+  
+  # Resources
+  resources:
+    limits:
+      cpu: 100m
+      memory: 128Mi
+    requests:
+      cpu: 50m
+      memory: 64Mi
+  
+  # Notification services configuration (add your services here)
+  notifiers: {}
+    # Example Slack configuration:
+    # service.slack: |
+    #   token: $slack-token
+    
+  # Subscriptions
+  subscriptions: []
+    # Example:
+    # - recipients:
+    #   - slack:my-channel
+    #   triggers:
+    #   - on-deployed
+    #   - on-health-degraded
+
+  # Templates
+  templates: {}
+
+## Dex (SSO/OAuth) - Disabled by default
 dex:
   enabled: false
+  
+  # Uncomment and configure if you need SSO
+  # resources:
+  #   limits:
+  #     cpu: 100m
+  #     memory: 128Mi
+  #   requests:
+  #     cpu: 50m
+  #     memory: 64Mi
+
+## Global Pod Security
+global:
+  securityContext:
+    runAsNonRoot: true
+    runAsUser: 999
+    fsGroup: 999
+

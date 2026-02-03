@@ -73,3 +73,18 @@ output "project_id" {
   description = "DigitalOcean Project ID"
   value       = var.project_id
 }
+
+# ArgoCD Outputs
+output "argocd_info" {
+  description = "ArgoCD deployment information"
+  value = {
+    url       = module.argocd.argocd_url
+    namespace = module.argocd.argocd_namespace
+    username  = module.argocd.argocd_admin_username
+  }
+}
+
+output "argocd_password_command" {
+  description = "Command to get ArgoCD admin password"
+  value       = module.argocd.get_admin_password
+}

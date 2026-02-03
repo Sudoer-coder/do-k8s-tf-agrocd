@@ -67,7 +67,7 @@ variable "db_version" {
   type = number
 }
 
-variable "letsencrypt_email" {
-  description = "Email address used for Let's Encrypt ACME registration"
+variable "argocd_domain" {
+  description = "Domain for ArgoCD server"
   type        = string
 }
