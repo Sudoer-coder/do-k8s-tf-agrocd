@@ -73,7 +73,7 @@ vendor/
 
 # OS / IDE
 
-../.DS_Store
+.DS_Store
 Thumbs.db
 .idea/
 .vscode/
