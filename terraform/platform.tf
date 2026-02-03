@@ -5,6 +5,8 @@ module "ingress_nginx" {
 module "argocd" {
   source = "./argocd"
 
+  argocd_domain = var.argocd_domain
+
   depends_on = [
     module.ingress_nginx
   ]
