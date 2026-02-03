@@ -74,17 +74,18 @@ output "project_id" {
   value       = var.project_id
 }
 
-# ArgoCD Outputs
 output "argocd_info" {
-  description = "ArgoCD deployment information"
   value = {
-    url       = module.argocd.argocd_url
-    namespace = module.argocd.argocd_namespace
-    username  = module.argocd.argocd_admin_username
+    url      = "https://${var.argocd_domain}"
+    username = "admin" 
   }
 }
 
 output "argocd_password_command" {
-  description = "Command to get ArgoCD admin password"
-  value       = module.get_admin_password_command
+  value = "kubectl -n argocd get secret argocd-initial-admin-secret -o jsonpath='{.data.password}' | base64 -d"
+}
+
+# Link this back to your Ingress NGINX
+output "ingress_load_balancer_ip" {
+  value = data.kubernetes_service.ingress_nginx.status.0.load_balancer.0.ingress.0.ip
 }
