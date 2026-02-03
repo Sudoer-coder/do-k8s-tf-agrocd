@@ -69,6 +69,59 @@ jobs:
       - name: Terraform Validate
         run: terraform validate
 
+  terraform-argocd:
+    name: Terraform ArgoCD Bootstrap (fmt + validate)
+    runs-on: ubuntu-latest
+
+    defaults:
+      run:
+        working-directory: terraform
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: 1.6.6
+
+      - name: Terraform Init (Terraform Cloud)
+        run: terraform init -input=false -upgrade
+
+      - name: Terraform Format Check
+        run: terraform fmt -check -recursive
+
+      - name: Terraform Validate
+        run: terraform validate
+
+
+  terraform-addons:
+    name: Terraform K8s Addons (Ingress / cert-manager)
+    runs-on: ubuntu-latest
+
+    defaults:
+      run:
+        working-directory: terraform
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: 1.6.6
+
+      - name: Terraform Init (Terraform Cloud)
+        run: terraform init -input=false -upgrade
+
+      - name: Terraform Format Check
+        run: terraform fmt -check -recursive
+
+      - name: Terraform Validate
+        run: terraform validate
+
       - name: CI Final Status
         run: |
           echo "======================================"
