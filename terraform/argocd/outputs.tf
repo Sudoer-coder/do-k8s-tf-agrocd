@@ -7,7 +7,7 @@ output "argocd_url" {
 }
 
 output "argocd_password_command" {
-  value = "kubectl -n argocd get secret argocd-initial-admin-secret -o jsonpath='{.data.password}' | base64 -d"
+  value       = "kubectl -n argocd get secret argocd-initial-admin-secret -o jsonpath='{.data.password}' | base64 -d"
   description = "Run this command to get the ArgoCD admin password"
 }
 
@@ -16,5 +16,5 @@ output "argocd_server_service" {
 }
 
 output "argocd_admin_username" {
-  value = "admin" 
+  value = "admin"
 }

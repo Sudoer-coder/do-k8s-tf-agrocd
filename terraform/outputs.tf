@@ -77,7 +77,7 @@ output "project_id" {
 output "argocd_info" {
   value = {
     url      = "https://${var.argocd_domain}"
-    username = "admin" 
+    username = "admin"
   }
 }
 
