@@ -1,0 +1,89 @@
+# Terraform
+
+.terraform/
+*.tfstate
+*.tfstate.*
+*.tfvars
+*.tfvars.json
+crash.log
+crash.*.log
+.terraform.lock.hcl
+
+
+override.tf
+override.tf.json
+*_override.tf
+*_override.tf.json
+
+
+# Sensitive / Secrets
+
+.env
+.env.*
+*.pem
+*.key
+*.crt
+*.pfx
+*.kubeconfig
+kubeconfig*
+secrets.yaml
+secret.yaml
+**/secrets/*
+**/*secret*
+**/*password*
+**/*credentials*
+
+
+# Kubernetes / Argo CD
+
+kubectl-config
+*.kube
+*.log
+helm-values.yaml
+values-secret.yaml
+argocd-secret.yaml
+
+
+# DigitalOcean / Cloud
+
+doctl
+.digitalocean/
+*.tfplan
+
+
+# Ansible
+
+*.retry
+ansible.cfg
+inventory.ini
+inventory.yml
+host_vars/
+group_vars/*secret*
+group_vars/*password*
+
+
+# CI / Build Artifacts
+
+dist/
+build/
+coverage/
+node_modules/
+vendor/
+
+
+# OS / IDE
+
+../.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+*.swp
+*.swo
+*.bak
+*.tmp
+
+
+# Logs
+
+*.log
+logs/
