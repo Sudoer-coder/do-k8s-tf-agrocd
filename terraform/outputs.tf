@@ -85,7 +85,3 @@ output "argocd_password_command" {
   value = "kubectl -n argocd get secret argocd-initial-admin-secret -o jsonpath='{.data.password}' | base64 -d"
 }
 
-# Link this back to your Ingress NGINX
-output "ingress_load_balancer_ip" {
-  value = data.kubernetes_service.ingress_nginx.status.0.load_balancer.0.ingress.0.ip
-}
